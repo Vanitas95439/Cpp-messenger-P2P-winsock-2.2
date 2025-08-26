@@ -59,10 +59,10 @@ int start_listen(std::string ip, int port) {
     g_peer_sock = accept(sListen, (SOCKADDR*)&addr, &size_of_addr);
     closesocket(sListen);
 
-    if (g_peer_sock == INVALID_SOCKET) {
-        error("state", "listen error");
-    } else {
+    if (g_peer_sock != INVALID_SOCKET) {
         std::cout << "Client connected\n";
+    } else {
+        error("state", "listen error");
     }
 
     start_recv_thread();
@@ -82,7 +82,7 @@ int start_connect (std::string ip, int port) {
     if (connect(g_peer_sock, (SOCKADDR*)&addr, size_of_addr) == 0) {
         std::cout << "OK\n";
     } else {
-        std::cout << "ERROR\n";
+        error("state", "connection error");
     }
 
     start_recv_thread();
@@ -99,7 +99,8 @@ int main() {
     std::map <std::string, int> commands;
     commands["listen"] = 0;
     commands["connect"] = 1;
-    commands["exit"] = 2;
+    commands["exit"] = 2;  
+    
 
     std::string line;
     while (running) {
@@ -118,6 +119,11 @@ int main() {
             {
             case 0: // listen 
             {
+                if (g_peer_sock != INVALID_SOCKET) {
+                    std::cout << "You have another connection, if you want to reconnect write <cmd reconnect>\n";
+                    break;
+                }
+
                 std::string ip; int port; iss >> ip >> port;
                 if (start_listen(ip, port) == 1) {
                     error("state", "listen error");
@@ -126,6 +132,11 @@ int main() {
             }
             case 1: // connect
             {
+                if (g_peer_sock != INVALID_SOCKET) {
+                    std::cout << "You have another connection, if you want to reconnect write <cmd reconnect>\n";
+                    break;
+                }
+
                 std::string ip; int port; iss >> ip >> port;
                 if (start_connect(ip, port) == 1) {
                     error("state", "connect error");
