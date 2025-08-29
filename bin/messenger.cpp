@@ -19,9 +19,10 @@ std::atomic<bool> running{true};
 
 std::thread g_recv_thread;
 
-void error(std::string type, std::string error) {
+int error(std::string type, std::string error) {
     lock_cout;
     std::cerr << '[' << type << ']' << ' ' << error << '\n';
+    return 1;
 }
 
 int peer_recv_loop() {
@@ -62,11 +63,10 @@ int start_listen(std::string ip, int port) {
     if (g_peer_sock != INVALID_SOCKET) {
         std::cout << "Client connected\n";
     } else {
-        error("state", "listen error");
+        return error("state", "listen error");;
     }
 
     start_recv_thread();
-
     return 0;
 }
 
@@ -82,18 +82,17 @@ int start_connect (std::string ip, int port) {
     if (connect(g_peer_sock, (SOCKADDR*)&addr, size_of_addr) == 0) {
         std::cout << "OK\n";
     } else {
-        error("state", "connection error");
+        return error("state", "listen error");
     }
 
     start_recv_thread();
-
     return 0;
 }
 
 int main() {
     WSAData wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        error("WSA", "WSAStartup error");
+        return error("WSA", "WSAStartup error");
     }
 
     std::map <std::string, int> commands;
